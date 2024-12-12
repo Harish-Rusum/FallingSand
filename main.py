@@ -21,6 +21,8 @@ class Grid:
     def __init__(self):
         self.grid = [[0 for _ in range(gridSize)] for _ in range(gridSize)]
 
+    def reset(self):
+        self.grid = [[0 for _ in range(gridSize)] for _ in range(gridSize)]
 
     def gravity(self):
         for i in range(len(self.grid) - 2, -1, -1):
@@ -69,30 +71,31 @@ class Grid:
                 elif self.grid[i][j] == 3:
                     pygame.draw.rect(win, water, rect)
 
-    def handleMouseClick(self, pos, material):
+    def handleMouseClick(self, pos, material,size):
         x, y = pos
         row = y // cellSize
         col = x // cellSize
 
         dirs = []
 
-        for i in range(-1, 2):
-            for j in range(-1, 2):
+        for i in range(-size, size+1):
+            for j in range(-size, size+1):
                 dirs.append([i, j])
 
         for dir in dirs:
             newRow = row + dir[0]
             newCol = col + dir[1]
             if 0 <= newRow < gridSize and 0 <= newCol < gridSize:
-                self.grid[newRow][newCol] = material
+                if random.randint(0,1) == 1:
+                    self.grid[newRow][newCol] = material
 
-    def erase(self, pos):
+    def erase(self, pos, size):
         x, y = pos
         row = y // cellSize
         col = x // cellSize
         dirs = []
-        for i in range(-1, 2):
-            for j in range(-1, 2):
+        for i in range(-size, size+1):
+            for j in range(-size, size+1):
                 dirs.append([i, j])
 
         for dir in dirs:
@@ -108,6 +111,9 @@ def main():
     clock = pygame.time.Clock()
     running = True
     currentMaterial = 1
+    currentSize = 0
+    holdingDown = False
+    holdingUp = False
 
     while running:
         screen.fill(baseColor)
@@ -122,11 +128,28 @@ def main():
                     currentMaterial = 2
                 elif event.key == pygame.K_3:
                     currentMaterial = 3
+                elif event.key == pygame.K_c:
+                    sim.reset()
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_UP]:
+            if not holdingUp:
+                currentSize += 1
+                holdingUp = True
+        else:
+            holdingUp = False
+
+        if keys[pygame.K_DOWN]:
+            if not holdingDown:
+                currentSize = max(0,currentSize - 1)
+                holdingDown = True
+        else:
+            holdingDown = False
 
         if pygame.mouse.get_pressed()[0]:
-            sim.handleMouseClick(pygame.mouse.get_pos(), currentMaterial)
+            sim.handleMouseClick(pygame.mouse.get_pos(), currentMaterial,currentSize)
         if pygame.mouse.get_pressed()[2]:
-            sim.erase(pygame.mouse.get_pos())
+            sim.erase(pygame.mouse.get_pos(), currentSize)
 
         sim.gravity()
         sim.draw(screen)
