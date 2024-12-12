@@ -1,3 +1,4 @@
+
 import pygame
 import sys
 import random
@@ -10,9 +11,11 @@ pygame.display.set_caption("Simulation")
 
 baseColor = (255, 255, 255)
 sand = (194, 178, 128)
+concrete = (128, 128, 128)
 
 gridSize = 80
 cellSize = width // gridSize
+
 
 class Grid:
     def __init__(self):
@@ -43,30 +46,33 @@ class Grid:
                 rect = pygame.Rect(j * cellSize, i * cellSize, cellSize, cellSize)
                 if self.grid[i][j] == 1:
                     pygame.draw.rect(win, sand, rect)
+                elif self.grid[i][j] == 2:
+                    pygame.draw.rect(win, concrete, rect)
 
-    def handleMouseClick(self, pos):
+    def handleMouseClick(self, pos, material):
         x, y = pos
         row = y // cellSize
         col = x // cellSize
 
         dirs = []
-        for i in range(-1,2):
-            for j in range(-1,2):
-                dirs.append([i,j])
+
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                dirs.append([i, j])
 
         for dir in dirs:
             newRow = row + dir[0]
             newCol = col + dir[1]
             if 0 <= newRow < gridSize and 0 <= newCol < gridSize:
-                self.grid[newRow][newCol] = 1 
-    
+                self.grid[newRow][newCol] = material
+
     def erase(self, pos):
         x, y = pos
         row = y // cellSize
         col = x // cellSize
-    
+
         if 0 <= row < gridSize and 0 <= col < gridSize:
-            self.grid[row][col] = 0 
+            self.grid[row][col] = 0
 
 
 sim = Grid()
@@ -74,6 +80,7 @@ sim = Grid()
 def main():
     clock = pygame.time.Clock()
     running = True
+    currentMaterial = 1
 
     while running:
         screen.fill(baseColor)
@@ -81,9 +88,14 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    currentMaterial = 1
+                elif event.key == pygame.K_2:
+                    currentMaterial = 2
 
         if pygame.mouse.get_pressed()[0]:
-            sim.handleMouseClick(pygame.mouse.get_pos())
+            sim.handleMouseClick(pygame.mouse.get_pos(), currentMaterial)
         if pygame.mouse.get_pressed()[2]:
             sim.erase(pygame.mouse.get_pos())
 
@@ -95,5 +107,6 @@ def main():
 
     pygame.quit()
     sys.exit()
+
 
 main()
