@@ -17,12 +17,70 @@ gridSize = 80
 cellSize = width // gridSize
 
 
+
 class Grid:
     def __init__(self):
         self.grid = [[0 for _ in range(gridSize)] for _ in range(gridSize)]
+        self.colors = [[baseColor for _ in range(gridSize)] for _ in range(gridSize)]
 
     def reset(self):
         self.grid = [[0 for _ in range(gridSize)] for _ in range(gridSize)]
+        self.colors = [[baseColor for _ in range(gridSize)] for _ in range(gridSize)]
+
+    def getDitheredColor(self, material):
+        if material == 1:
+            return (
+                max(0, min(255, sand[0] + random.randint(-10, 10))),
+                max(0, min(255, sand[1] + random.randint(-2, 2))),
+                max(0, min(255, sand[2] + random.randint(-10, 10)))
+            )
+        elif material == 2:
+            return (
+                max(0, min(255, concrete[0] + random.randint(-2, 2))),
+                max(0, min(255, concrete[1] + random.randint(-2, 2))),
+                max(0, min(255, concrete[2] + random.randint(-2, 2)))
+            )
+        elif material == 3:
+            return (
+                max(0, min(255, water[0] + random.randint(-5, 5))),
+                max(0, min(255, water[1] + random.randint(-5, 5))),
+                max(0, min(255, water[2] + random.randint(-10, 10)))
+            )
+        return baseColor
+
+    def handleMouseClick(self, pos, material, size):
+        x, y = pos
+        row = y // cellSize
+        col = x // cellSize
+
+        dirs = []
+        for i in range(-size, size + 1):
+            for j in range(-size, size + 1):
+                dirs.append([i, j])
+
+        for dir in dirs:
+            newRow = row + dir[0]
+            newCol = col + dir[1]
+            if 0 <= newRow < gridSize and 0 <= newCol < gridSize:
+                if random.randint(0, 1) == 1:
+                    self.grid[newRow][newCol] = material
+                    self.colors[newRow][newCol] = self.getDitheredColor(material)
+
+    def erase(self, pos, size):
+        x, y = pos
+        row = y // cellSize
+        col = x // cellSize
+        dirs = []
+        for i in range(-size, size + 1):
+            for j in range(-size, size + 1):
+                dirs.append([i, j])
+
+        for dir in dirs:
+            newRow = row + dir[0]
+            newCol = col + dir[1]
+            if 0 <= newRow < gridSize and 0 <= newCol < gridSize:
+                self.grid[newRow][newCol] = 0
+                self.colors[newRow][newCol] = baseColor
 
     def gravity(self):
         for i in range(len(self.grid) - 2, -1, -1):
@@ -31,18 +89,26 @@ class Grid:
                     if self.grid[i + 1][j] == 0:
                         self.grid[i][j] = 0
                         self.grid[i + 1][j] = 1
+                        self.colors[i + 1][j] = self.colors[i][j]
+                        self.colors[i][j] = baseColor
                     elif self.grid[i + 1][j] in [1, 2]:
                         if j > 0 and self.grid[i + 1][j - 1] == 0:
                             self.grid[i][j] = 0
                             self.grid[i + 1][j - 1] = 1
+                            self.colors[i + 1][j - 1] = self.colors[i][j]
+                            self.colors[i][j] = baseColor
                         elif j < gridSize - 1 and self.grid[i + 1][j + 1] == 0:
                             self.grid[i][j] = 0
                             self.grid[i + 1][j + 1] = 1
+                            self.colors[i + 1][j + 1] = self.colors[i][j]
+                            self.colors[i][j] = baseColor
 
                 if self.grid[i][j] == 3:
                     if self.grid[i + 1][j] == 0:
                         self.grid[i][j] = 0
                         self.grid[i + 1][j] = 3
+                        self.colors[i + 1][j] = self.colors[i][j]
+                        self.colors[i][j] = baseColor
                     else:
                         left = j > 0 and self.grid[i][j - 1] == 0
                         right = j < gridSize - 1 and self.grid[i][j + 1] == 0
@@ -50,61 +116,29 @@ class Grid:
                             if random.randint(0, 1) == 0:
                                 self.grid[i][j] = 0
                                 self.grid[i][j - 1] = 3
+                                self.colors[i][j - 1] = self.colors[i][j]
+                                self.colors[i][j] = baseColor
                             else:
                                 self.grid[i][j] = 0
                                 self.grid[i][j + 1] = 3
+                                self.colors[i][j + 1] = self.colors[i][j]
+                                self.colors[i][j] = baseColor
                         elif left:
                             self.grid[i][j] = 0
                             self.grid[i][j - 1] = 3
+                            self.colors[i][j - 1] = self.colors[i][j]
+                            self.colors[i][j] = baseColor
                         elif right:
                             self.grid[i][j] = 0
                             self.grid[i][j + 1] = 3
+                            self.colors[i][j + 1] = self.colors[i][j]
+                            self.colors[i][j] = baseColor
 
     def draw(self, win):
         for i in range(gridSize):
             for j in range(gridSize):
                 rect = pygame.Rect(j * cellSize, i * cellSize, cellSize, cellSize)
-                if self.grid[i][j] == 1:
-                    pygame.draw.rect(win, sand, rect)
-                elif self.grid[i][j] == 2:
-                    pygame.draw.rect(win, concrete, rect)
-                elif self.grid[i][j] == 3:
-                    pygame.draw.rect(win, water, rect)
-
-    def handleMouseClick(self, pos, material,size):
-        x, y = pos
-        row = y // cellSize
-        col = x // cellSize
-
-        dirs = []
-
-        for i in range(-size, size+1):
-            for j in range(-size, size+1):
-                dirs.append([i, j])
-
-        for dir in dirs:
-            newRow = row + dir[0]
-            newCol = col + dir[1]
-            if 0 <= newRow < gridSize and 0 <= newCol < gridSize:
-                if random.randint(0,1) == 1:
-                    self.grid[newRow][newCol] = material
-
-    def erase(self, pos, size):
-        x, y = pos
-        row = y // cellSize
-        col = x // cellSize
-        dirs = []
-        for i in range(-size, size+1):
-            for j in range(-size, size+1):
-                dirs.append([i, j])
-
-        for dir in dirs:
-            newRow = row + dir[0]
-            newCol = col + dir[1]
-            if 0 <= newRow < gridSize and 0 <= newCol < gridSize:
-                self.grid[newRow][newCol] = 0
-
-
+                pygame.draw.rect(win, self.colors[i][j], rect)
 sim = Grid()
 
 def main():
