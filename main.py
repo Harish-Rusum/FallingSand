@@ -6,7 +6,7 @@ pygame.init()
 
 width, height = 800, 800
 screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("Simulation")
+pygame.display.set_caption("Water and sand sim")
 
 baseColor = (255, 255, 255)
 sand = (194, 178, 128)
